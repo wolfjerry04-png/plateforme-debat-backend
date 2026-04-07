@@ -1,9 +1,11 @@
 import {
-  Controller, Post, Get, Body, Headers,
+  Controller, Post, Get, Patch, Body, Headers, Param,
   RawBodyRequest, Req, Request, UseGuards,
 } from '@nestjs/common';
 import { PaiementsService } from './paiements.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('paiements')
 export class PaiementsController {
@@ -50,10 +52,43 @@ export class PaiementsController {
     return { premium };
   }
 
-  // GET /api/paiements/moncash/verifier?orderId=xxx
+  // GET /api/paiements/moncash/verifier
   @UseGuards(JwtAuthGuard)
   @Get('moncash/verifier')
-  async verifierMoncash(@Request() req: any, @Body() body: { orderId: string }) {
+  async verifierMoncash(@Body() body: { orderId: string }) {
     return this.paiementsService.verifierPaiementMonCash(body.orderId);
+  }
+
+  // ─── ADMIN ───────────────────────────────────────────────────
+
+  // GET /api/paiements/admin/liste — lister tous les abonnements
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/liste')
+  async listerAbonnements() {
+    return this.paiementsService.listerAbonnements();
+  }
+
+  // POST /api/paiements/admin/valider — valider manuellement un paiement
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Post('admin/valider')
+  async validerManuellement(
+    @Body() body: { userId: string; plan: string; reference: string; methode: string },
+  ) {
+    return this.paiementsService.validerPaiementManuellement(
+      body.userId,
+      body.plan,
+      body.reference,
+      body.methode,
+    );
+  }
+
+  // PATCH /api/paiements/admin/revoquer/:userId — révoquer un abonnement
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Patch('admin/revoquer/:userId')
+  async revoquerAbonnement(@Param('userId') userId: string) {
+    return this.paiementsService.revoquerAbonnement(userId);
   }
 }

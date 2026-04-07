@@ -193,4 +193,81 @@ export class PaiementsService {
     });
     return !!abonnement;
   }
+
+  // ─── ADMIN : Lister tous les abonnements ─────────────────────
+  async listerAbonnements() {
+    return this.prisma.abonnement2.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { id: true, prenom: true, nom: true, email: true, role: true },
+        },
+      },
+    });
+  }
+
+  // ─── ADMIN : Valider manuellement un paiement ────────────────
+  // Appelé par l'admin après réception d'une capture MonCash/PayPal/Zelle
+  async validerPaiementManuellement(
+    userId: string,
+    plan: string,
+    reference: string,
+    methode: string = 'MANUEL',
+  ) {
+    const dateFin = new Date();
+    dateFin.setMonth(dateFin.getMonth() + 3); // 3 mois d'accès
+
+    const montant = plan === 'PREMIUM' ? 100 : plan === 'INSTITUTION' ? 200 : 0;
+
+    // Créer ou mettre à jour l'abonnement
+    const abonnement = await this.prisma.abonnement2.upsert({
+      where: { userId } as any,
+      update: {
+        plan: plan as any,
+        statut: 'ACTIF',
+        dateFin,
+        stripeId: `${methode}-${reference}`,
+        montant,
+      },
+      create: {
+        userId,
+        plan: plan as any,
+        statut: 'ACTIF',
+        dateFin,
+        stripeId: `${methode}-${reference}`,
+        montant,
+      },
+    });
+
+    // Notifier l'utilisateur
+    await this.prisma.notification.create({
+      data: {
+        type: 'MENTION',
+        titre: `✅ Paiement validé — Plan ${plan}`,
+        contenu: `Votre paiement ${methode} (réf: ${reference}) a été validé. Accès premium actif jusqu'au ${dateFin.toLocaleDateString('fr-FR')}.`,
+        userId,
+      },
+    });
+
+    return { message: 'Abonnement activé avec succès', abonnement };
+  }
+
+  // ─── ADMIN : Révoquer un abonnement ──────────────────────────
+  async revoquerAbonnement(userId: string) {
+    await this.prisma.abonnement2.updateMany({
+      where: { userId, statut: 'ACTIF' },
+      data: { statut: 'ANNULE' },
+    });
+
+    await this.prisma.notification.create({
+      data: {
+        type: 'MENTION',
+        titre: '❌ Abonnement annulé',
+        contenu: 'Votre abonnement premium a été annulé. Contactez le support pour plus d\'informations.',
+        userId,
+      },
+    });
+
+    return { message: 'Abonnement révoqué' };
+  }
 }
