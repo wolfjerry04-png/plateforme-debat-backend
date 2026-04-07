@@ -102,12 +102,10 @@ export class TournoisService {
   async genererCalendrier(tournoiId: string) {
     const tournoi = await this.findById(tournoiId);
 
+    if (tournoi.statut !== 'INSCRIPTION') throw new BadRequestException('Calendrier déjà généré');
+
     if (tournoi.equipes.length < 4) {
       throw new BadRequestException('Il faut au moins 4 équipes pour générer un calendrier');
-    }
-
-    if (tournoi.statut !== 'INSCRIPTION') {
-      throw new BadRequestException('Le calendrier a déjà été généré pour ce tournoi');
     }
 
     // Mélanger les équipes aléatoirement pour le tirage
