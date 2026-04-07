@@ -1,8 +1,3 @@
-// src/config/configuration.ts
-// CORRECTION : section smtp ajoutée pour que auth.service.ts
-// puisse lire SMTP_USER et SMTP_PASS proprement via ConfigService
-// sans jamais hardcoder de valeurs dans le code source.
-
 export default () => ({
   port: parseInt(process.env.PORT ?? '3001', 10),
   nodeEnv: process.env.NODE_ENV ?? 'development',
@@ -16,16 +11,14 @@ export default () => ({
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   },
 
-  // NOUVEAU — credentials email lus depuis les variables d'environnement
-  smtp: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
+  },
+
+  resend: {
+    apiKey: process.env.RESEND_API_KEY,
   },
 
   anthropic: {

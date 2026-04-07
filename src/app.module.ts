@@ -1,14 +1,8 @@
-// src/app.module.ts
-// CORRECTION : PrismaModule ajouté (global) — tous les services
-// peuvent désormais injecter PrismaService sans redéclarer PrismaModule.
-
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
 import configuration from './config/configuration';
-
-import { PrismaModule } from './prisma/prisma.module';   // ← NOUVEAU
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { DebatsModule } from './debats/debats.module';
@@ -46,13 +40,11 @@ import { StripeController } from './paiements/stripe.controller';
       isGlobal: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: () => ({
+      useFactory: (configService: ConfigService) => ({
         ttl: 60,
         max: 100,
       }),
     }),
-
-    PrismaModule,       // ← NOUVEAU — @Global() donc disponible partout
 
     AuthModule,
     UsersModule,
@@ -73,6 +65,6 @@ import { StripeController } from './paiements/stripe.controller';
     SponsoringModule,
     TenantsModule,
   ],
-  controllers: [StripeController],
+controllers: [StripeController],
 })
 export class AppModule {}

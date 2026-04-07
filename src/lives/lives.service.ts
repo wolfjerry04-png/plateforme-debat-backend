@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreerLiveDto } from './dto/creer-live.dto';
 
 @Injectable()
 export class LivesService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   async creer(createurId: string, dto: CreerLiveDto) {
     return this.prisma.live.create({

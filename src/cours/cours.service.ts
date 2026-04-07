@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreerCoursDto } from './dto/creer-cours.dto';
 
 @Injectable()
 export class CoursService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   // Créer un cours (FORMATEUR ou ADMIN)
   async creer(createurId: string, dto: CreerCoursDto) {

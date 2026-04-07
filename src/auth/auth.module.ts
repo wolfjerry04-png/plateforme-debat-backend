@@ -1,8 +1,3 @@
-// src/auth/auth.module.ts
-// CORRECTION : ConfigService ajouté aux providers pour l'injection
-// dans AuthService. PrismaService est global (via PrismaModule @Global)
-// donc pas besoin de l'importer ici.
-
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -19,12 +14,14 @@ import { UsersModule } from '../users/users.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.secret'),
-        signOptions: {
-          expiresIn: configService.get('jwt.expiresIn') as any,
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        return {
+          secret: configService.get<string>('jwt.secret'),
+          signOptions: {
+            expiresIn: configService.get('jwt.expiresIn') as any,
+          },
+        };
+      },
     }),
   ],
   providers: [AuthService, JwtStrategy],

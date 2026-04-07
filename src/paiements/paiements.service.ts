@@ -1,13 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PaiementsService {
-  private prisma = new PrismaClient();
   private _stripe: any = null;
 
-  constructor(private configService: ConfigService) {}
+  constructor(private readonly prisma: PrismaService, private configService: ConfigService) {}
 
   private getStripe() {
     if (!this._stripe) {

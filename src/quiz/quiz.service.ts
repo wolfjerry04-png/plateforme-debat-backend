@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreerQuizDto } from './dto/creer-quiz.dto';
 import { SoumettreQuizDto } from './dto/soumettre-quiz.dto';
 
 @Injectable()
 export class QuizService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   async creer(dto: CreerQuizDto) {
     return this.prisma.quiz.create({

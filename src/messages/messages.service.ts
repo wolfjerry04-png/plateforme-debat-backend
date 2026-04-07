@@ -4,12 +4,12 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreerMessageDto } from './dto/creer-message.dto';
 
 @Injectable()
 export class MessagesService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   // Poster un message dans un débat (APPRENANT, FORMATEUR, ADMIN)
   async creer(auteurId: string, dto: CreerMessageDto) {

@@ -9,7 +9,6 @@ import * as bcrypt from 'bcryptjs';
 @Injectable()
 export class UsersService {
   // Instance Prisma pour accéder à la base de données
-  private prisma = new PrismaClient();
 
   // Trouver un utilisateur par son email (utilisé lors de la connexion)
   async findByEmail(email: string) {

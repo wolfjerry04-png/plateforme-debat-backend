@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { ModifierProfilDto } from './dto/modifier-profil.dto';
 
 @Injectable()
 export class ProfilsService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   // Récupérer le profil complet d'un utilisateur avec ses statistiques
   async getProfil(userId: string) {

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { CreerTournoiDto } from './dto/creer-tournoi.dto';
@@ -7,10 +7,9 @@ import { CreerEquipeDto } from './dto/creer-equipe.dto';
 
 @Injectable()
 export class TournoisService {
-  private prisma = new PrismaClient();
   private anthropic: Anthropic;
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly prisma: PrismaService, private configService: ConfigService) {
     this.anthropic = new Anthropic({
       apiKey: this.configService.get<string>('anthropic.apiKey'),
     });

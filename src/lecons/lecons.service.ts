@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreerLeconDto } from './dto/creer-lecon.dto';
 
 @Injectable()
 export class LeconsService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   async creer(dto: CreerLeconDto) {
     return this.prisma.lecon.create({

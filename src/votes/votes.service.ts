@@ -3,12 +3,12 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreerVoteDto } from './dto/creer-vote.dto';
 
 @Injectable()
 export class VotesService {
-  private prisma = new PrismaClient();
+  constructor(private readonly prisma: PrismaService) {}
 
   // Voter sur un message (APPRENANT, FORMATEUR, ADMIN)
   async voter(votantId: string, dto: CreerVoteDto) {

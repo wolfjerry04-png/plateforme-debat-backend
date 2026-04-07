@@ -1,10 +1,3 @@
-// src/debats/debats.service.ts
-// CORRECTION : remplace `private prisma = new PrismaClient()`
-// par l'injection de PrismaService via le constructeur.
-// Même pattern à appliquer dans TOUS les autres services :
-// votes.service.ts, messages.service.ts, notifications.service.ts,
-// profils.service.ts, cours.service.ts, lecons.service.ts, etc.
-
 import {
   Injectable,
   NotFoundException,
@@ -16,10 +9,9 @@ import { ModifierDebatDto } from './dto/modifier-debat.dto';
 
 @Injectable()
 export class DebatsService {
-  // AVANT : private prisma = new PrismaClient();  ← crée une nouvelle connexion
-  // APRÈS : injection du singleton partagé        ← une seule connexion réutilisée
   constructor(private readonly prisma: PrismaService) {}
 
+  // Créer un nouveau débat (FORMATEUR ou ADMIN seulement)
   async creer(createurId: string, dto: CreerDebatDto) {
     return this.prisma.debat.create({
       data: {
@@ -36,6 +28,7 @@ export class DebatsService {
     });
   }
 
+  // Lister tous les débats (avec pagination)
   async listerTous(page: number = 1, limite: number = 10) {
     const skip = (page - 1) * limite;
 
@@ -49,7 +42,7 @@ export class DebatsService {
             select: { id: true, prenom: true, nom: true },
           },
           _count: {
-            select: { messages: true },
+            select: { messages: true }, // nombre de messages par débat
           },
         },
       }),
@@ -64,6 +57,7 @@ export class DebatsService {
     };
   }
 
+  // Récupérer un débat avec tous ses messages
   async findById(id: string) {
     const debat = await this.prisma.debat.findUnique({
       where: { id },
@@ -72,7 +66,7 @@ export class DebatsService {
           select: { id: true, prenom: true, nom: true, role: true },
         },
         messages: {
-          where: { visible: true },
+          where: { visible: true }, // exclut les messages masqués
           orderBy: { createdAt: 'asc' },
           include: {
             auteur: {
@@ -89,10 +83,12 @@ export class DebatsService {
     return debat;
   }
 
+  // Modifier un débat (créateur ou ADMIN)
   async modifier(id: string, userId: string, userRole: string, dto: ModifierDebatDto) {
     const debat = await this.prisma.debat.findUnique({ where: { id } });
     if (!debat) throw new NotFoundException('Débat introuvable');
 
+    // Seul le créateur ou un ADMIN peut modifier
     if (debat.createurId !== userId && userRole !== 'ADMIN') {
       throw new ForbiddenException('Vous ne pouvez pas modifier ce débat');
     }
@@ -103,6 +99,7 @@ export class DebatsService {
     });
   }
 
+  // Supprimer un débat (ADMIN seulement)
   async supprimer(id: string) {
     const debat = await this.prisma.debat.findUnique({ where: { id } });
     if (!debat) throw new NotFoundException('Débat introuvable');
