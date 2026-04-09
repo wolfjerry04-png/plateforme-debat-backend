@@ -1,5 +1,6 @@
-import { IsString, MinLength, MaxLength, IsEnum, IsOptional } from 'class-validator';
-import { StatutDebat } from '@prisma/client';
+import { IsString, MinLength, MaxLength, IsEnum, IsOptional, IsDateString } from 'class-validator';
+
+enum StatutDebat { BROUILLON='BROUILLON', OUVERT='OUVERT', FERME='FERME', ARCHIVE='ARCHIVE' }
 
 export class CreerDebatDto {
   @IsString()
@@ -14,4 +15,13 @@ export class CreerDebatDto {
   @IsOptional()
   @IsEnum(StatutDebat, { message: 'Statut invalide' })
   statut?: StatutDebat;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  categorie?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateDebut?: string;
 }

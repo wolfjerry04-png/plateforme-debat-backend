@@ -26,6 +26,17 @@ enum TypeVote {
   CONTRE
 }
 
+enum StanceMsg {
+  POUR
+  CONTRE
+  NEUTRE
+}
+
+enum TypeVoteDebat {
+  POUR
+  CONTRE
+}
+
 enum TypeNotification {
   NOUVEAU_DEBAT
   NOUVEAU_MESSAGE
@@ -123,6 +134,7 @@ model User {
   equipesCapitaine      Equipe[]             @relation("capitaine")
   membresEquipe         MembreEquipe[]
   abonnementPremium     Abonnement2[]
+  votesDebat            VoteDebat[]
 
   @@map("users")
 }
@@ -144,23 +156,27 @@ model Debat {
   titre       String
   description String
   statut      StatutDebat @default(BROUILLON)
+  categorie   String?
+  dateDebut   DateTime?   @map("date_debut")
   vues        Int         @default(0)
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  createurId String    @map("createur_id")
-  createur   User      @relation(fields: [createurId], references: [id])
-  messages   Message[]
+  createurId  String       @map("createur_id")
+  createur    User         @relation(fields: [createurId], references: [id])
+  messages    Message[]
+  votesDebat  VoteDebat[]
 
   @@map("debats")
 }
 
 model Message {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   contenu   String
-  visible   Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  visible   Boolean   @default(true)
+  stance    StanceMsg @default(NEUTRE)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   auteurId String  @map("auteur_id")
   auteur   User    @relation(fields: [auteurId], references: [id])
@@ -183,6 +199,20 @@ model Vote {
 
   @@unique([votantId, messageId])
   @@map("votes")
+}
+
+model VoteDebat {
+  id        String       @id @default(uuid())
+  type      TypeVoteDebat
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  votantId String @map("votant_id")
+  votant   User   @relation(fields: [votantId], references: [id])
+  debatId  String @map("debat_id")
+  debat    Debat  @relation(fields: [debatId], references: [id], onDelete: Cascade)
+
+  @@unique([votantId, debatId])
+  @@map("votes_debats")
 }
 
 model Notification {

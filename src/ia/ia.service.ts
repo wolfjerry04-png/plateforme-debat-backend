@@ -12,136 +12,127 @@ export class IaService {
     });
   }
 
-  // Générer un feedback sur les réponses d'un quiz
-  async feedbackQuiz(
-    score: number,
-    questions: any[],
-    reponses: number[],
-  ): Promise<string> {
+  /* ── Feedback quiz ── */
+  async feedbackQuiz(score: number, questions: any[], reponses: number[]): Promise<string> {
     const details = questions.map((q, i) => ({
-      question: q.question,
+      question:       q.question,
       reponseChoisie: q.options[reponses[i]],
-      bonneReponse: q.options[q.reponse],
-      correct: reponses[i] === q.reponse,
+      bonneReponse:   q.options[q.reponse],
+      correct:        reponses[i] === q.reponse,
     }));
 
     const message = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model:      'claude-sonnet-4-20250514',
       max_tokens: 500,
-      messages: [
-        {
-          role: 'user',
-          content: `Tu es un formateur expert en débat juridique en Haïti. 
-          Un apprenant vient de terminer un quiz avec un score de ${score}%.
-          Voici ses réponses : ${JSON.stringify(details)}.
-          Donne un feedback encourageant en français (3-4 phrases max), 
-          souligne ce qui va bien et donne un conseil précis pour s'améliorer.`,
-        },
-      ],
+      messages:   [{
+        role:    'user',
+        content: `Tu es un formateur expert en débat. Un apprenant a obtenu ${score}% au quiz.
+Réponses : ${JSON.stringify(details)}.
+Donne un feedback encourageant en français (3-4 phrases), souligne ce qui va bien et donne un conseil précis.`,
+      }],
     });
 
     return (message.content[0] as any).text;
   }
 
-  // Générer du contenu pédagogique pour une leçon
+  /* ── Contenu pédagogique ── */
   async genererContenuLecon(sujet: string, niveau: string): Promise<string> {
     const message = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model:      'claude-sonnet-4-20250514',
       max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: `Tu es un expert en formation au débat juridique pour le contexte haïtien.
-          Génère une leçon structurée en Markdown sur le sujet : "${sujet}".
-          Niveau : ${niveau}.
-          La leçon doit inclure :
-          1. Introduction (2-3 phrases)
-          2. Concepts clés (3-5 points)
-          3. Exemple pratique dans le contexte haïtien
-          4. Points à retenir
-          Réponds uniquement en français.`,
-        },
-      ],
+      messages:   [{
+        role:    'user',
+        content: `Expert en formation au débat. Génère une leçon Markdown sur "${sujet}" niveau ${niveau}.
+Inclure : introduction, concepts clés, exemple haïtien, points à retenir. Répondre en français.`,
+      }],
     });
-
     return (message.content[0] as any).text;
   }
 
-  // Générer des questions de quiz sur un sujet
-  async genererQuiz(sujet: string, nombreQuestions: number = 5): Promise<any[]> {
+  /* ── Quiz ── */
+  async genererQuiz(sujet: string, nombreQuestions = 5): Promise<any[]> {
     const message = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model:      'claude-sonnet-4-20250514',
       max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: `Génère ${nombreQuestions} questions de quiz en français sur : "${sujet}".
-          Réponds UNIQUEMENT avec un JSON valide, sans texte avant ou après.
-          Format exact :
-          [
-            {
-              "question": "Question ici ?",
-              "options": ["Option A", "Option B", "Option C", "Option D"],
-              "reponse": 0
-            }
-          ]
-          "reponse" est l'index (0-3) de la bonne réponse.`,
-        },
-      ],
+      messages:   [{
+        role:    'user',
+        content: `Génère ${nombreQuestions} questions de quiz en français sur "${sujet}".
+JSON uniquement, sans texte :
+[{"question":"...","options":["A","B","C","D"],"reponse":0}]
+"reponse" = index (0-3) de la bonne réponse.`,
+      }],
     });
 
     const texte = (message.content[0] as any).text;
-    return JSON.parse(texte);
+    const clean = texte.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
   }
 
-  // Analyser un argument de débat
-  async analyserArgument(argument: string): Promise<string> {
+  /* ── Analyse argument — SÉCURISÉ côté serveur ── */
+  async analyserArgument(
+    argument: string,
+    contexte: { titreDebat: string; categorie?: string; derniersArguments?: string[] },
+  ): Promise<{
+    scores: { logique: number; sources: number; persuasion: number };
+    pointsForts: string[];
+    pointsAmeliorer: string[];
+    suggestion: string;
+    moduleRecommande: string;
+  }> {
+    const derniers = contexte.derniersArguments?.slice(-3).join('\n- ') || 'Aucun encore';
+
     const message = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 400,
-      messages: [
-        {
-          role: 'user',
-          content: `Tu es un coach en débat juridique haïtien.
-          Analyse cet argument en 3-4 phrases en français :
-          "${argument}"
-          Évalue : la clarté, la logique, et la force de persuasion.
-          Donne une note /10 et un conseil d'amélioration.`,
-        },
-      ],
-    });
+      model:      'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages:   [{
+        role:    'user',
+        content: `Tu es un assistant spécialisé dans l'art du débat.
 
-    return (message.content[0] as any).text;
-  }
+DÉBAT : ${contexte.titreDebat}
+CATÉGORIE : ${contexte.categorie ?? 'Général'}
+DERNIERS ARGUMENTS : ${derniers}
 
-  // Parcours personnalisé selon le niveau
-  async parcoursPersnnalise(
-    niveau: string,
-    pointsFaibles: string[],
-  ): Promise<string> {
-    const message = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 600,
-      messages: [
-        {
-          role: 'user',
-          content: `Tu es un formateur en débat pour la plateforme haïtienne.
-          Un apprenant de niveau "${niveau}" a des difficultés sur : ${pointsFaibles.join(', ')}.
-          Propose un parcours d'apprentissage personnalisé en 5 étapes en français.
-          Chaque étape doit être concrète et adaptée au contexte haïtien.`,
-        },
-      ],
-    });
+Analyse cet argument : "${argument}"
 
-    return (message.content[0] as any).text;
-  }
-  async chatbot(message: string): Promise<string> {
-  const response = await this.client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 300,
-    system: 'Tu es un assistant de la plateforme Debat Haiti. Tu reponds en francais de facon concise. Tu aides les utilisateurs a comprendre la plateforme, les debats, les formations, les tournois et les paiements. Si tu ne sais pas, dis de contacter le support via WhatsApp.',
-    messages: [{ role: 'user', content: message }],
-  });
-  return (response.content[0] as any).text;
+Réponds UNIQUEMENT en JSON valide (sans markdown) :
+{
+  "scores": { "logique": 7, "sources": 5, "persuasion": 8 },
+  "pointsForts": ["Point fort 1", "Point fort 2"],
+  "pointsAmeliorer": ["À améliorer 1", "À améliorer 2"],
+  "suggestion": "Suggestion concrète",
+  "moduleRecommande": "Nom du module de formation recommandé"
 }
+Sois encourageant mais honnête. Réponds en français.`,
+      }],
+    });
+
+    const texte = (message.content[0] as any).text;
+    const clean = texte.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  }
+
+  /* ── Parcours personnalisé ── */
+  async parcoursPersnnalise(niveau: string, pointsFaibles: string[]): Promise<string> {
+    const message = await this.client.messages.create({
+      model:      'claude-sonnet-4-20250514',
+      max_tokens: 600,
+      messages:   [{
+        role:    'user',
+        content: `Formateur en débat. Niveau "${niveau}", difficultés sur : ${pointsFaibles.join(', ')}.
+Propose un parcours 5 étapes concrètes, adapté au contexte haïtien, en français.`,
+      }],
+    });
+    return (message.content[0] as any).text;
+  }
+
+  /* ── Chatbot assistant ── */
+  async chatbot(messageUtilisateur: string): Promise<string> {
+    const response = await this.client.messages.create({
+      model:      'claude-sonnet-4-20250514',
+      max_tokens: 300,
+      system:     'Tu es un assistant de la plateforme Debat Haiti. Tu réponds en français de façon concise. Tu aides les utilisateurs à comprendre la plateforme, les débats, les formations, les tournois et les paiements. Si tu ne sais pas, dis de contacter le support.',
+      messages:   [{ role: 'user', content: messageUtilisateur }],
+    });
+    return (response.content[0] as any).text;
+  }
 }

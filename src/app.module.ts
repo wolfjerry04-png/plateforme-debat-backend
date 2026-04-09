@@ -22,6 +22,7 @@ import { PaiementsModule } from './paiements/paiements.module';
 import { SponsoringModule } from './sponsoring/sponsoring.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { StripeController } from './paiements/stripe.controller';
+import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { StripeController } from './paiements/stripe.controller';
     PaiementsModule,
     SponsoringModule,
     TenantsModule,
+    WebsocketModule,
   ],
 controllers: [StripeController],
 })

@@ -1,5 +1,6 @@
-import { IsString, MinLength, MaxLength, IsEnum, IsOptional } from 'class-validator';
-import { StatutDebat } from '@prisma/client';
+import { IsString, MinLength, MaxLength, IsEnum, IsOptional, IsDateString } from 'class-validator';
+
+enum StatutDebat { BROUILLON='BROUILLON', OUVERT='OUVERT', FERME='FERME', ARCHIVE='ARCHIVE' }
 
 export class ModifierDebatDto {
   @IsOptional()
@@ -16,4 +17,13 @@ export class ModifierDebatDto {
   @IsOptional()
   @IsEnum(StatutDebat)
   statut?: StatutDebat;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  categorie?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateDebut?: string;
 }

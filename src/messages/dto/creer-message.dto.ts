@@ -1,4 +1,10 @@
-import { IsString, IsUUID, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsUUID, MinLength, MaxLength, IsEnum, IsOptional } from 'class-validator';
+
+export enum StanceMsg {
+  POUR = 'POUR',
+  CONTRE = 'CONTRE',
+  NEUTRE = 'NEUTRE',
+}
 
 export class CreerMessageDto {
   @IsString()
@@ -8,4 +14,8 @@ export class CreerMessageDto {
 
   @IsUUID('4', { message: 'ID de débat invalide' })
   debatId: string;
+
+  @IsOptional()
+  @IsEnum(StanceMsg, { message: 'Stance invalide : POUR, CONTRE ou NEUTRE' })
+  stance?: StanceMsg;
 }
